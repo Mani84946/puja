@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lost &amp; Found — Community Board</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<header class="navbar">
+    <div class="container navbar-inner">
+        <a href="index.html" class="brand"><span class="brand-pin">📌</span> Lost &amp; Found Board</a>
+        <nav class="nav-links">
+            <a href="search.html">Browse Board</a>
+            <a href="dashboard.html" class="auth-only">My Postings</a>
+            <a href="report-lost.html" class="auth-only">Report Lost</a>
+            <a href="report-found.html" class="auth-only">Report Found</a>
+            <a href="admin.html" class="admin-only">Admin</a>
+            <a href="login.html" class="guest-only">Login</a>
+            <a href="register.html" class="btn btn-outline guest-only">Join the Board</a>
+            <a href="#" id="logoutLink" class="btn btn-outline auth-only">Logout</a>
+        </nav>
+        <button class="nav-toggle" id="navToggle" aria-label="Toggle navigation">☰</button>
+    </div>
+</header>
+
+<div id="flashContainer"></div>
+
+<main>
+    <section class="hero">
+        <div class="container">
+            <span class="eyebrow">A NOTICEBOARD FOR THE WHOLE NEIGHBORHOOD</span>
+            <h1>Lost it? Found it?<br>Pin it up.</h1>
+            <p>The simple community board where ordinary people post what they've lost and what they've found — no middleman, just neighbors helping neighbors.</p>
+            <div class="hero-actions">
+                <a href="report-lost.html" class="btn btn-primary">I Lost Something</a>
+                <a href="report-found.html" class="btn btn-tertiary">I Found Something</a>
+            </div>
+        </div>
+    </section>
+
+    <section class="container stats">
+        <div class="stat-card">
+            <span class="stat-number" id="statLost">0</span>
+            <span class="stat-label">Lost Notices</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number" id="statFound">0</span>
+            <span class="stat-label">Found Notices</span>
+        </div>
+        <div class="stat-card">
+            <span class="stat-number" id="statResolved">0</span>
+            <span class="stat-label">Reunited</span>
+        </div>
+    </section>
+
+    <section class="container board-section">
+        <div class="section-header">
+            <h2>Freshly Pinned</h2>
+            <a href="search.html">Browse the whole board &rarr;</a>
+        </div>
+        <div class="item-grid" id="recentGrid"></div>
+    </section>
+</main>
+
+<footer class="site-footer">
+    <div class="container">
+        <p>Lost &amp; Found Community Board — a place for the common man to reconnect with what's theirs.</p>
+        <p class="footer-sub">Runs entirely in your browser. No sign-up fees, no middlemen.</p>
+    </div>
+</footer>
+
+<script src="js/store.js"></script>
+<script src="js/ui.js"></script>
+<script>
+function flyerCardHTML(item) {
+    const photo = item.image
+        ? `<img class="flyer-photo" src="${item.image}" alt="${escapeHTML(item.title)}">`
+        : `<div class="flyer-photo-placeholder">${item.type === 'found' ? '🧦' : '❓'}</div>`;
+    const resolvedTag = item.status === 'resolved' ? `<span class="flyer-tag flyer-tag-resolved">Resolved</span>` : '';
+    return `
+    <article class="flyer ${item.type === 'found' ? 'flyer-found' : ''}">
+        ${photo}
+        <div>
+            <span class="flyer-tag flyer-tag-${item.type}">${item.type}</span>${resolvedTag}
+        </div>
+        <h3>${escapeHTML(item.title)}</h3>
+        <p class="flyer-meta">${escapeHTML(item.category)} &middot; ${escapeHTML(item.location)}</p>
+        <p class="flyer-desc">${escapeHTML(item.description.slice(0, 90))}${item.description.length > 90 ? '…' : ''}</p>
+        <div class="flyer-footer">
+            <span>${formatDate(item.date)}</span>
+            <span>by ${escapeHTML(item.userName)}</span>
+        </div>
+    </article>`;
+}
+
+function escapeHTML(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+function formatDate(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    if (isNaN(d)) return dateStr;
+    return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const items = getItems();
+    document.getElementById('statLost').textContent = items.filter(i => i.type === 'lost').length;
+    document.getElementById('statFound').textContent = items.filter(i => i.type === 'found').length;
+    document.getElementById('statResolved').textContent = items.filter(i => i.status === 'resolved').length;
+
+    const recent = [...items].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 6);
+    const grid = document.getElementById('recentGrid');
+    grid.innerHTML = recent.length
+        ? recent.map(flyerCardHTML).join('')
+        : `<p class="empty-state">The board is empty — be the first to pin something up!</p>`;
+});
+</script>
+</body>
+</html>
